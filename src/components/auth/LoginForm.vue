@@ -28,7 +28,7 @@
 
         let isValid = true
 
-        if (!form.usernam) {
+        if (!form.username) {
             errors.username = 'Username harus diisi'
             isValid = false
         }
@@ -54,7 +54,7 @@
         try {
             await emit('submit', { ...form })
         } catch (error) {
-            generalError.value = error.message || 'Something went wrong. Please try again.'
+            generalError.value = error.message || 'Terjadi kesalahan saat login'
         } finally {
             loading.value = false
         }
@@ -64,7 +64,7 @@
 <template>
     <form @submit.prevent="handleSubmit" class="space-y-6">
         <div>
-            <BaseInput v-model="form.username" type="text" label="Username" placeholder="Enter your username" required
+            <BaseInput v-model="form.username" type="text" label="Username" placeholder="Masukan Username" required
                 :error="errors.username">
                 <template #prefix>
                     <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -79,7 +79,7 @@
 
         <div>
             <BaseInput v-model="form.password" :type="showPassword ? 'text' : 'password'" label="Password"
-                placeholder="Enter your password" required :error="errors.password">
+                placeholder="Masukan Kata Sandi" required :error="errors.password">
                 <template #prefix>
                     <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"

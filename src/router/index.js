@@ -4,6 +4,11 @@ import { authRoutes } from "./auth";
 // define route
 const routes = [
   ...authRoutes,
+  {
+    path: "/admin/dashboard",
+    name: "dashboard",
+    component: () => import("../views/dashboard/Dashboard.vue"),
+  },
 ];
 
 const router = createRouter({
