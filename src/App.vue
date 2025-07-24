@@ -1,8 +1,19 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useToast } from './composables/useToast'
+import ToastContainer from './components/ui/ToastContainer.vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+
+const toastContainerRef = ref()
+const { setToastContainer } = useToast()
+
+onMounted(() => {
+  if (toastContainerRef.value) {
+    setToastContainer(toastContainerRef.value)
+  }
+})
 
 const authPages = ['/auth/login']
 const isAuthPage = computed(() => authPages.includes(route.path))
@@ -21,6 +32,7 @@ const isAuthPage = computed(() => authPages.includes(route.path))
     <!-- Main content -->
     <main>
       <router-view></router-view>
+      <ToastContainer ref="toastContainerRef" />
     </main>
   </div>
 </template>

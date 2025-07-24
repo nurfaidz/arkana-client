@@ -1,35 +1,39 @@
-<script setup>
+<script setup lang="ts">
     import { ref, reactive } from 'vue'
     import BaseButton from '../ui/BaseButton.vue'
     import BaseInput from '../ui/BaseInput.vue'
+    import { useToast } from '../../composables/useToast'
 
     const emit = defineEmits(['submit'])
+    const { error: showError } = useToast()
 
     const showPassword = ref(false)
     const loading = ref(false)
 
     const form = reactive({
-        username: '',
+        email: '',
         password: '',
         rememberMe: false
     })
 
     const errors = reactive({
-        username: '',
+        email: '',
         password: ''
     })
 
     const generalError = ref('')
 
     const validateForm = () => {
-        errors.username = ''
+        errors.email = ''
         errors.password = ''
-        generalError.value = ''
 
         let isValid = true
 
-        if (!form.username) {
-            errors.username = 'Username harus diisi'
+        if (!form.email) {
+            errors.email = 'Username harus diisi'
+            isValid = false
+        } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(form.email)) {
+            errors.email = 'Format email tidak valid'
             isValid = false
         }
 
@@ -39,6 +43,10 @@
         } else if (form.password.length < 6) {
             errors.password = 'Password minimal 6 karakter'
             isValid = false
+        }
+
+        if (!isValid) {
+            showError('Mohon periksa kembali form yang Anda isi', 'Validasi error')
         }
 
         return isValid
@@ -54,7 +62,8 @@
         try {
             await emit('submit', { ...form })
         } catch (error) {
-            generalError.value = error.message || 'Terjadi kesalahan saat login'
+            const errorMessage = error.message || 'Terjadi kesalahan saat login'
+            showError(errorMessage, 'Login Error')
         } finally {
             loading.value = false
         }
@@ -64,8 +73,8 @@
 <template>
     <form @submit.prevent="handleSubmit" class="space-y-6">
         <div>
-            <BaseInput v-model="form.username" type="text" label="Username" placeholder="Masukan Username" required
-                :error="errors.username">
+            <BaseInput v-model="form.email" type="email" label="Email" placeholder="Masukan Email" required
+                :error="errors.email">
                 <template #prefix>
                     <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
