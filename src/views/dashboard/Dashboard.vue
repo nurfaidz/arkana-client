@@ -9,54 +9,58 @@
 
             <!-- Main Content -->
             <main class="flex-1 ml-64 p-6">
-                <component :is="currentPageComponent" :user="user" @navigate="handleNavigation" />
+                <router-view :user="user" @navigate="handleNavigation" />
             </main>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import Cookies from 'js-cookie';
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Header from '../../components/layout/Header.vue'
 import Sidebar from '../../components/layout/Sidebar.vue'
-import DashboardPage from '../../components/dashboard/DashboardPage.vue'
-import FieldPage from '../../components/field/FieldPage.vue'
-// import AccountManagementPage from './pages/AccountManagementPage.vue'
-// import BookingFormPage from './pages/BookingFormPage.vue'
 
-// User data
-const user = ref({
-    name: 'Nur',
-    email: 'nur@example.com',
-    role: 'Facility Manager',
-    loginTime: '09:30 WIB',
-    lastLogin: '23 Juli 2025'
-})
+const route = useRoute()
+const router = useRouter()
 
-// Navigation state
-const currentPage = ref('dashboard')
+const rawUser = Cookies.get('user')
+const user = ref<{ name: string; email: string; role?: string } | null>(null)
 
-// Page components mapping
-const pageComponents = {
-    dashboard: DashboardPage,
-    fields: FieldPage,
-    // accounts: AccountManagementPage,
-    // booking: BookingFormPage
+if (rawUser) {
+    try {
+        user.value = JSON.parse(rawUser)
+    } catch (e) {
+        console.error('Failed to parse user cookie:', e)
+    }
 }
 
-const currentPageComponent = computed(() => {
-    return pageComponents[currentPage.value] || DashboardPage
+// Navigation state - sync with router
+const currentPage = computed(() => {
+    if (route.name === 'dashboard') return 'dashboard'
+    return route.name || 'dashboard'
 })
+
+// Watch route changes to update current page
+watch(route, (newRoute) => {
+    console.log('Route changed to:', newRoute.name)
+}, { immediate: true })
 
 // Event handlers
 const handleNavigation = (page: string) => {
-    currentPage.value = page
+    if (page === 'dashboard') {
+        router.push('/dashboard')
+    } else {
+        router.push(`/dashboard/${page}`)
+    }
 }
 
 const handleLogout = () => {
     if (confirm('Apakah Anda yakin ingin logout?')) {
         alert('Logging out...')
         // Handle logout logic here
+        // router.push('/login')
     }
 }
 </script>

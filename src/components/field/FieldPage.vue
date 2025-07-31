@@ -16,7 +16,7 @@
         </div>
 
         <!-- Quick Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-blue-100">
@@ -42,8 +42,8 @@
                         </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Lapangan Aktif</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ activeFields }}</p>
+                        <p class="text-sm font-medium text-gray-600">Lapangan Tersedia</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ availableFields }}</p>
                     </div>
                 </div>
             </div>
@@ -63,22 +63,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-purple-100">
-                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                            </path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Rata-rata Okupansi</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ averageOccupancy }}%</p>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Filters -->
@@ -88,23 +72,21 @@
                     <label class="text-sm font-medium text-gray-700 mb-2 block">Filter by Type</label>
                     <select v-model="selectedType"
                         class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Semua Jenis</option>
-                        <option value="Futsal">Futsal</option>
-                        <option value="Basketball">Basketball</option>
-                        <option value="Badminton">Badminton</option>
-                        <option value="Tennis">Tennis</option>
-                        <option value="Volleyball">Volleyball</option>
-                        <option value="Soccer">Soccer</option>
+                        <option value="" disabled selected>Pilih jenis lapangan</option>
+                        <option value="FUTSAL">Futsal</option>
+                        <option value="BASKET">Basket</option>
+                        <option value="BADMINTON">Badminton</option>
+                        <option value="TENNIS">Tennis</option>
+                        <option value="MINI_SOCCER">Mini Soccer</option>
                     </select>
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-700 mb-2 block">Filter by Status</label>
                     <select v-model="selectedStatus"
                         class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Semua Status</option>
-                        <option value="active">Aktif</option>
-                        <option value="maintenance">Maintenance</option>
-                        <option value="inactive">Tidak Aktif</option>
+                        <option value="" disabled selected>Pilih status lapangan</option>
+                        <option value="AVAILABLE">Aktif</option>
+                        <option value="MAINTENANCE">Maintenance</option>
                     </select>
                 </div>
                 <div>
@@ -121,15 +103,19 @@
                 <h3 class="text-lg font-semibold text-gray-900">Daftar Lapangan</h3>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-600">
+                <div v-if="loading" class="text-center py-6">
+                    <p class="text-gray-600">Memuat data lapangan...</p>
+                </div>
+                <div v-else-if="error" class="text-red-600 text-center py-6">
+                    <p>{{ error }}</p>
+                </div>
+                <table v-else class="w-full text-sm text-left text-gray-600">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="py-3 px-6 font-medium text-gray-900">Nama Lapangan</th>
                             <th class="py-3 px-6 font-medium text-gray-900">Jenis</th>
                             <th class="py-3 px-6 font-medium text-gray-900">Status</th>
                             <th class="py-3 px-6 font-medium text-gray-900">Harga/Jam</th>
-                            <th class="py-3 px-6 font-medium text-gray-900">Fasilitas</th>
-                            <th class="py-3 px-6 font-medium text-gray-900">Last Updated</th>
                             <th class="py-3 px-6 font-medium text-gray-900">Aksi</th>
                         </tr>
                     </thead>
@@ -153,31 +139,25 @@
                                 </span>
                             </td>
                             <td class="py-4 px-6 font-medium text-gray-900">
-                                {{ formatCurrency(field.pricePerHour) }}
-                            </td>
-                            <td class="py-4 px-6">
-                                <div class="flex flex-wrap gap-1">
-                                    <span v-for="facility in field.facilities" :key="facility"
-                                        class="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
-                                        {{ facility }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="py-4 px-6 text-gray-500">
-                                {{ formatDate(field.lastUpdated) }}
+                                {{ formatCurrency(field.hourly_rate) }}
                             </td>
                             <td class="py-4 px-6">
                                 <div class="flex space-x-2">
                                     <BaseButton variant="outline" size="sm" @click="editField(field)">
                                         Edit
                                     </BaseButton>
-                                    <BaseButton variant="outline" size="sm" @click="toggleFieldStatus(field)">
+                                    <!-- <BaseButton variant="outline" size="sm" @click="toggleFieldStatus(field)">
                                         {{ field.status === 'active' ? 'Nonaktifkan' : 'Aktifkan' }}
-                                    </BaseButton>
+                                    </BaseButton> -->
                                     <BaseButton variant="danger" size="sm" @click="deleteField(field.id)">
                                         Hapus
                                     </BaseButton>
                                 </div>
+                            </td>
+                        </tr>
+                        <tr v-if="filteredFields.length === 0">
+                            <td colspan="5" class="py-4 px-6 text-center text-gray-500">
+                                Tidak ada lapangan yang ditemukan
                             </td>
                         </tr>
                     </tbody>
@@ -204,44 +184,36 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lapangan</label>
-                                <input v-model="newField.name" type="text" required
+                                <input type="text" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Contoh: Lapangan Futsal A" />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Lapangan</label>
-                                <select v-model="newField.type" required
+                                <select required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">Pilih jenis</option>
-                                    <option value="Futsal">Futsal</option>
-                                    <option value="Basketball">Basketball</option>
-                                    <option value="Badminton">Badminton</option>
-                                    <option value="Tennis">Tennis</option>
-                                    <option value="Volleyball">Volleyball</option>
-                                    <option value="Soccer">Soccer</option>
+                                    <option value="" disabled selected>Pilih jenis</option>
+                                    <option value="FUTSAL">Futsal</option>
+                                    <option value="BASKET">Basket</option>
+                                    <option value="BADMINTON">Badminton</option>
+                                    <option value="TENNIS">Tennis</option>
+                                    <option value="MINI_SOCCER">Mini Soccer</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Harga / Jam</label>
-                                <input v-model.number="newField.pricePerHour" type="number" min="0"
+                                <input type="number" min="0"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Contoh: 75000" />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                                <select v-model="newField.status" required
+                                <select required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="active">Aktif</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="inactive">Tidak Aktif</option>
+                                    <option disabled selected>Pilih status</option>
+                                    <option value="AVAILABLE">Tersedia</option>
+                                    <option value="MAINTENANCE">Maintenance</option>
                                 </select>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Fasilitas (pisahkan dengan
-                                    koma)</label>
-                                <input v-model="newField.facilitiesRaw" type="text"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Contoh: Toilet, Kantin, Parkir" />
                             </div>
                         </div>
 
@@ -258,48 +230,38 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import fieldApi from '../../services/field'
+import BaseButton from '../../components/ui/BaseButton.vue'
 
 const showAddFieldModal = ref(false)
 const searchQuery = ref('')
 const selectedType = ref('')
 const selectedStatus = ref('')
+const loading = ref(false)
+const error = ref(null)
 
-const fields = ref([
-    {
-        id: 1,
-        name: 'Lapangan A',
-        type: 'Futsal',
-        status: 'active',
-        pricePerHour: 75000,
-        facilities: ['Toilet', 'Parkir'],
-        lastUpdated: new Date()
-    },
-    {
-        id: 2,
-        name: 'Lapangan B',
-        type: 'Basketball',
-        status: 'maintenance',
-        pricePerHour: 90000,
-        facilities: ['Toilet'],
-        lastUpdated: new Date()
+const fields = ref([])
+
+const fetchFields = async () => {
+    loading.value = true
+    error.value = null
+    try {
+        const response = await fieldApi.getFields()
+        console.log('Fields fetched:', response.data)
+        fields.value = response.data
+    } catch (err) {
+        error.value = err.response?.data?.message
+        console.log(err)
+    } finally {
+        loading.value = false
     }
-])
+}
 
-const newField = ref({
-    name: '',
-    type: '',
-    status: 'active',
-    pricePerHour: 0,
-    facilitiesRaw: ''
-})
+fetchFields()
 
 const totalFields = computed(() => fields.value.length)
-const activeFields = computed(() => fields.value.filter(f => f.status === 'active').length)
-const maintenanceFields = computed(() => fields.value.filter(f => f.status === 'maintenance').length)
-const averageOccupancy = computed(() => {
-    // contoh dummy: pakai angka random
-    return Math.floor(Math.random() * 100)
-})
+const availableFields = computed(() => fields.value.filter(f => f.status === 'AVAILABLE').length)
+const maintenanceFields = computed(() => fields.value.filter(f => f.status === 'MAINTENANCE').length)
 
 const filteredFields = computed(() => {
     return fields.value.filter(field => {
@@ -342,29 +304,6 @@ const formatDate = (date) => {
         month: 'long',
         day: 'numeric'
     })
-}
-
-const addField = () => {
-    fields.value.push({
-        id: Date.now(),
-        name: newField.value.name,
-        type: newField.value.type,
-        status: newField.value.status,
-        pricePerHour: newField.value.pricePerHour,
-        facilities: newField.value.facilitiesRaw.split(',').map(f => f.trim()),
-        lastUpdated: new Date()
-    })
-
-    // Reset form
-    newField.value = {
-        name: '',
-        type: '',
-        status: 'active',
-        pricePerHour: 0,
-        facilitiesRaw: ''
-    }
-
-    showAddFieldModal.value = false
 }
 
 const editField = (field) => {

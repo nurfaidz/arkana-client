@@ -21,13 +21,6 @@ const isAuthPage = computed(() => authPages.includes(route.path))
 
 <template>
   <div id="app">
-    <!-- Header/Navigation untuk halaman non-auth -->
-    <header v-if="!isAuthPage" class="bg-white shadow">
-      <nav class="container mx-auto px-4 py-4">
-        <router-link to="/" class="text-blue-600 hover:text-blue-800">Home</router-link>
-        <router-link to="/auth/login" class="ml-4 text-blue-600 hover:text-blue-800">Login</router-link>
-      </nav>
-    </header>
 
     <!-- Main content -->
     <main>

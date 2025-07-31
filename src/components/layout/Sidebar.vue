@@ -3,7 +3,7 @@
         <nav class="p-4">
             <ul class="space-y-2">
                 <li v-for="item in menuItems" :key="item.id">
-                    <button @click="$emit('navigate', item.id)" :class="[
+                    <button @click="handleNavigate(item.id)" :class="[
                         'w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200',
                         currentPage === item.id
                             ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
@@ -26,7 +26,7 @@
                     Aksi Cepat
                 </h3>
                 <div class="space-y-2">
-                    <button @click="$emit('navigate', 'booking')"
+                    <button @click="handleNavigate('bookings')"
                         class="w-full flex items-center px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
                         <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -34,7 +34,7 @@
                         </svg>
                         Walk-in Booking
                     </button>
-                    <button
+                    <button @click="handleNavigate('reports')"
                         class="w-full flex items-center px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                         <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -54,9 +54,13 @@ defineProps<{
     currentPage: string
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
     navigate: [page: string]
 }>()
+
+const handleNavigate = (page: string) => {
+    emit('navigate', page)
+}
 
 const menuItems = [
     {

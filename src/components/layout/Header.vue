@@ -31,18 +31,32 @@
                     <div class="flex items-center space-x-3">
                         <div class="text-right">
                             <p class="text-sm font-medium text-gray-900">{{ user.name }}</p>
-                            <p class="text-xs text-gray-500">{{ user.role }}</p>
+                            <!-- <p class="text-xs text-gray-500">{{ user.role }}</p> -->
                         </div>
                         <div class="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
                             <span class="text-sm font-bold text-white">{{ user.name.charAt(0) }}</span>
                         </div>
-                        <button @click="$emit('logout')" class="text-gray-400 hover:text-gray-600 transition-colors"
-                            title="Logout">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button @click="handleLogout" :disabled="loggingOut" :class="[
+                            'flex items-center space-x-2 px-3 py-2 text-sm rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-red-500',
+                            loggingOut
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
+                        ]" title="Logout">
+                            <svg v-if="loggingOut" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+
+                            <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
                                 </path>
                             </svg>
+
+                            {{ loggingOut ? 'Logging out...' : '' }}
                         </button>
                     </div>
                 </div>
@@ -52,17 +66,30 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
+import authApi from '../../services/auth'
+
+
 defineProps<{
     user: {
         name: string
         email: string
         role: string
-        loginTime: string
-        lastLogin: string
+        // loginTime: string
+        // lastLogin: string
     }
 }>()
 
-defineEmits<{
-    logout: []
-}>()
+const loggingOut = ref(false);
+
+const handleLogout = async () => {
+    if (loggingOut.value) return;
+
+    try {
+        loggingOut.value = true;
+        await authApi.logout();
+    } finally {
+        loggingOut.value = false;
+    }
+}
 </script>
