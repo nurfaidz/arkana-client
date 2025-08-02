@@ -1,7 +1,3 @@
-<script setup>
-
-</script>
-
 <template>
     <div class="space-y-1">
         <label v-if="label" :for="inputId" class="block text-sm font-medium text-gray-700">
@@ -93,7 +89,7 @@ export default {
             }
         },
         inputClasses() {
-            const baseClasses = 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500'
+            const baseClasses = 'block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500'
 
             const sizeClasses = {
                 sm: 'px-3 py-1.5 text-sm',

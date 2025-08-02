@@ -6,7 +6,7 @@
                 <h2 class="text-3xl font-bold text-gray-900 mb-2">Management Lapangan</h2>
                 <p class="text-gray-600">Kelola dan monitor semua lapangan olahraga</p>
             </div>
-            <BaseButton variant="primary" @click="showAddFieldModal = true">
+            <BaseButton variant="primary" @click="openAddModal">
                 <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -43,7 +43,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Lapangan Tersedia</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ availableFields }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ availableFields }}</p>
                     </div>
                 </div>
             </div>
@@ -66,203 +66,68 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
-            <div class="flex flex-wrap items-center gap-4">
-                <div>
-                    <label class="text-sm font-medium text-gray-700 mb-2 block">Filter by Type</label>
-                    <select v-model="selectedType"
-                        class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="" disabled selected>Pilih jenis lapangan</option>
-                        <option value="FUTSAL">Futsal</option>
-                        <option value="BASKET">Basket</option>
-                        <option value="BADMINTON">Badminton</option>
-                        <option value="TENNIS">Tennis</option>
-                        <option value="MINI_SOCCER">Mini Soccer</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-700 mb-2 block">Filter by Status</label>
-                    <select v-model="selectedStatus"
-                        class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="" disabled selected>Pilih status lapangan</option>
-                        <option value="AVAILABLE">Aktif</option>
-                        <option value="MAINTENANCE">Maintenance</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-700 mb-2 block">Search</label>
-                    <input v-model="searchQuery" type="text" placeholder="Cari nama lapangan..."
-                        class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            </div>
-        </div>
+        <FieldFilters 
+            v-model:selectedType="selectedType"
+            v-model:selectedStatus="selectedStatus" 
+            v-model:searchQuery="searchQuery"
+        />
 
-        <!-- Fields List -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Daftar Lapangan</h3>
-            </div>
-            <div class="overflow-x-auto">
-                <div v-if="loading" class="text-center py-6">
-                    <p class="text-gray-600">Memuat data lapangan...</p>
-                </div>
-                <div v-else-if="error" class="text-red-600 text-center py-6">
-                    <p>{{ error }}</p>
-                </div>
-                <table v-else class="w-full text-sm text-left text-gray-600">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="py-3 px-6 font-medium text-gray-900">Nama Lapangan</th>
-                            <th class="py-3 px-6 font-medium text-gray-900">Jenis</th>
-                            <th class="py-3 px-6 font-medium text-gray-900">Status</th>
-                            <th class="py-3 px-6 font-medium text-gray-900">Harga/Jam</th>
-                            <th class="py-3 px-6 font-medium text-gray-900">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="field in filteredFields" :key="field.id" class="border-t hover:bg-gray-50">
-                            <td class="py-4 px-6">
-                                <div>
-                                    <p class="font-medium text-gray-900">{{ field.name }}</p>
-                                    <p class="text-xs text-gray-500">ID: {{ field.id }}</p>
-                                </div>
-                            </td>
-                            <td class="py-4 px-6">
-                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                    {{ field.type }}
-                                </span>
-                            </td>
-                            <td class="py-4 px-6">
-                                <span :class="getStatusClass(field.status)"
-                                    class="px-2 py-1 rounded-full text-xs font-medium">
-                                    {{ getStatusText(field.status) }}
-                                </span>
-                            </td>
-                            <td class="py-4 px-6 font-medium text-gray-900">
-                                {{ formatCurrency(field.hourly_rate) }}
-                            </td>
-                            <td class="py-4 px-6">
-                                <div class="flex space-x-2">
-                                    <BaseButton variant="outline" size="sm" @click="editField(field)">
-                                        Edit
-                                    </BaseButton>
-                                    <!-- <BaseButton variant="outline" size="sm" @click="toggleFieldStatus(field)">
-                                        {{ field.status === 'active' ? 'Nonaktifkan' : 'Aktifkan' }}
-                                    </BaseButton> -->
-                                    <BaseButton variant="danger" size="sm" @click="deleteField(field.id)">
-                                        Hapus
-                                    </BaseButton>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr v-if="filteredFields.length === 0">
-                            <td colspan="5" class="py-4 px-6 text-center text-gray-500">
-                                Tidak ada lapangan yang ditemukan
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <!-- Fields Table -->
+        <FieldTable 
+            :fields="filteredFields"
+            :loading="loading"
+            @edit="openEditModal"
+            @delete="handleDelete"
+            @toggle-status="handleToggleStatus"
+        />
 
-        <!-- Add Field Modal -->
-        <div v-if="showAddFieldModal"
-            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xl font-semibold text-gray-900">Tambah Lapangan Baru</h3>
-                        <button @click="showAddFieldModal = false" class="text-gray-500 hover:text-gray-700">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <form @submit.prevent="addField">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lapangan</label>
-                                <input type="text" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Contoh: Lapangan Futsal A" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Lapangan</label>
-                                <select required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="" disabled selected>Pilih jenis</option>
-                                    <option value="FUTSAL">Futsal</option>
-                                    <option value="BASKET">Basket</option>
-                                    <option value="BADMINTON">Badminton</option>
-                                    <option value="TENNIS">Tennis</option>
-                                    <option value="MINI_SOCCER">Mini Soccer</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Harga / Jam</label>
-                                <input type="number" min="0"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Contoh: 75000" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                                <select required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option disabled selected>Pilih status</option>
-                                    <option value="AVAILABLE">Tersedia</option>
-                                    <option value="MAINTENANCE">Maintenance</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 flex justify-end space-x-2">
-                            <BaseButton variant="outline" @click="showAddFieldModal = false">Batal</BaseButton>
-                            <BaseButton type="submit" variant="primary">Simpan</BaseButton>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+        <!-- Field Modal -->
+        <FieldModal
+            :show="showModal"
+            :field="selectedField"
+            :is-submitting="isSubmitting"
+            @close="closeModal"
+            @submit="handleSubmit"
+            ref="fieldModalRef"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import fieldApi from '../../services/field'
+import { ref, computed, onMounted } from 'vue'
+import { useFields, type Field } from '../../composables/useField'
 import BaseButton from '../../components/ui/BaseButton.vue'
+import FieldModal from '../../components/field/FieldModal.vue'
+import FieldFilters from '../../components/field/FieldFilter.vue'
+import FieldTable from '../../components/field/FieldTable.vue'
 
-const showAddFieldModal = ref(false)
-const searchQuery = ref('')
+// Composables
+const {
+    fields,
+    loading,
+    isSubmitting,
+    totalFields,
+    availableFields,
+    maintenanceFields,
+    fetchFields,
+    createField,
+    updateField,
+    deleteField,
+    toggleFieldStatus,
+    handleApiErrors
+} = useFields()
+
+// Filters
 const selectedType = ref('')
 const selectedStatus = ref('')
-const loading = ref(false)
-const error = ref(null)
+const searchQuery = ref('')
 
-const fields = ref([])
+// Modal state
+const showModal = ref(false)
+const selectedField = ref<Field | null>(null)
+const fieldModalRef = ref()
 
-const fetchFields = async () => {
-    loading.value = true
-    error.value = null
-    try {
-        const response = await fieldApi.getFields()
-        console.log('Fields fetched:', response.data)
-        fields.value = response.data
-    } catch (err) {
-        error.value = err.response?.data?.message
-        console.log(err)
-    } finally {
-        loading.value = false
-    }
-}
-
-fetchFields()
-
-const totalFields = computed(() => fields.value.length)
-const availableFields = computed(() => fields.value.filter(f => f.status === 'AVAILABLE').length)
-const maintenanceFields = computed(() => fields.value.filter(f => f.status === 'MAINTENANCE').length)
-
+// Computed
 const filteredFields = computed(() => {
     return fields.value.filter(field => {
         const matchesType = selectedType.value === '' || field.type === selectedType.value
@@ -272,51 +137,56 @@ const filteredFields = computed(() => {
     })
 })
 
-const getStatusText = (status) => {
-    switch (status) {
-        case 'active': return 'Aktif'
-        case 'maintenance': return 'Maintenance'
-        case 'inactive': return 'Tidak Aktif'
-        default: return status
+// Methods
+const openAddModal = () => {
+    selectedField.value = null
+    showModal.value = true
+}
+
+const openEditModal = (field: Field) => {
+    selectedField.value = { ...field }
+    showModal.value = true
+}
+
+const closeModal = () => {
+    showModal.value = false
+    selectedField.value = null
+}
+
+const handleSubmit = async (fieldData: Field) => {
+    let result
+    
+    if (selectedField.value?.id) {
+        // Edit mode
+        result = await updateField(selectedField.value.id, fieldData)
+    } else {
+        // Add mode
+        result = await createField(fieldData)
+    }
+    
+    if (result.success) {
+        closeModal()
+    } else {
+        // Handle API validation errors
+        const apiErrors = handleApiErrors(result.error)
+        if (apiErrors && fieldModalRef.value) {
+            fieldModalRef.value.setErrors(apiErrors)
+        }
     }
 }
 
-const getStatusClass = (status) => {
-    switch (status) {
-        case 'active': return 'bg-green-100 text-green-700'
-        case 'maintenance': return 'bg-yellow-100 text-yellow-700'
-        case 'inactive': return 'bg-gray-100 text-gray-700'
-        default: return 'bg-gray-100 text-gray-700'
+const handleDelete = async (field: Field) => {
+    if (confirm(`Yakin ingin menghapus lapangan "${field.name}"?`)) {
+        await deleteField(field.id)
     }
 }
 
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0
-    }).format(amount)
+const handleToggleStatus = async (field: Field) => {
+    await toggleFieldStatus(field)
 }
 
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('id-ID', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    })
-}
-
-const editField = (field) => {
-    alert('Edit feature belum diimplementasikan.')
-}
-
-const toggleFieldStatus = (field) => {
-    field.status = field.status === 'active' ? 'inactive' : 'active'
-}
-
-const deleteField = (id) => {
-    if (confirm('Yakin ingin menghapus lapangan ini?')) {
-        fields.value = fields.value.filter(f => f.id !== id)
-    }
-}
+// Lifecycle
+onMounted(() => {
+    fetchFields()
+})
 </script>
