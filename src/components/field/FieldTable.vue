@@ -40,17 +40,30 @@
                             {{ formatCurrency(field.hourly_rate) }}
                         </td>
                         <td class="py-4 px-6">
-                            <div class="flex space-x-2">
+                            <div class="flex items-center space-x-3">
                                 <BaseButton variant="outline" size="sm" @click="$emit('edit', field)">
                                     Edit
                                 </BaseButton>
-                                <BaseButton 
-                                    :variant="field.status === 'AVAILABLE' ? 'warning' : 'success'" 
-                                    size="sm" 
-                                    @click="$emit('toggle-status', field)"
-                                >
-                                    {{ field.status === 'AVAILABLE' ? 'Maintenance' : 'Aktifkan' }}
-                                </BaseButton>
+                                
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs text-gray-500">Maintenance</span>
+                                    <button
+                                        @click="handleToggleStatus(field)"
+                                        :class="[
+                                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                                            field.status === 'AVAILABLE' ? 'bg-green-600' : 'bg-gray-300'
+                                        ]"
+                                    >
+                                        <span
+                                            :class="[
+                                                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                                                field.status === 'AVAILABLE' ? 'translate-x-6' : 'translate-x-1'
+                                            ]"
+                                        />
+                                    </button>
+                                    <span class="text-xs text-gray-500">Tersedia</span>
+                                </div>
+                                
                                 <BaseButton variant="danger" size="sm" @click="$emit('delete', field)">
                                     Hapus
                                 </BaseButton>
@@ -84,7 +97,7 @@ defineProps<{
     loading: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
     edit: [field: Field]
     delete: [field: Field]
     'toggle-status': [field: Field]
@@ -112,5 +125,9 @@ const formatCurrency = (amount: number) => {
         currency: 'IDR',
         minimumFractionDigits: 0
     }).format(amount)
+}
+
+function handleToggleStatus(field: Field) {
+    emit('toggle-status', field)
 }
 </script>

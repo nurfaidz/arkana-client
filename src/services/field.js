@@ -1,7 +1,5 @@
 import Api from "./api";
 
-const token = localStorage.getItem('token');
-
 const FieldService = {
     getFields: async () => {
         try {
@@ -16,6 +14,36 @@ const FieldService = {
     createField: async (fieldData) => {
         try {
             const response = await Api.post('/admin/fields', fieldData);
+
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    updateField: async (fieldId, fieldData) => {
+        try {
+            const response = await Api.put(`/admin/fields/${fieldId}`, fieldData);
+
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    deleteField: async (fieldId) => {
+        try {
+            const response = await Api.delete(`/admin/fields/${fieldId}`);
+
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    updateFieldStatus: async (fieldId) => {
+        try {
+            const response = await Api.put(`/admin/fields/${fieldId}/status`);
 
             return response.data;
         } catch (error) {

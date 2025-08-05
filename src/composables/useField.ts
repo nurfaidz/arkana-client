@@ -73,7 +73,6 @@ export const useFields = () => {
             if (index !== -1) {
                 fields.value[index] = { id, ...fieldData }
             } else {
-                // Fallback: refresh all fields
                 await fetchFields()
             }
             
@@ -101,18 +100,16 @@ export const useFields = () => {
     }
     
     const toggleFieldStatus = async (field: Field) => {
-        const newStatus = field.status === 'AVAILABLE' ? 'MAINTENANCE' : 'AVAILABLE'
-        const result = await updateField(field.id, {
-            ...field,
-            status: newStatus
-        })
-        
-        if (!result.success) {
-            // Revert status if update failed
-            field.status = field.status === 'AVAILABLE' ? 'MAINTENANCE' : 'AVAILABLE'
+        try {
+            await fieldApi.updateFieldStatus(field.id)
+
+            success('Status lapangan berhasil diubah!')
+            return { success: true }
+        } catch (error) {
+            console.error('Error toggling field status:', error)
+            showError(error.response?.data?.message || 'Gagal mengubah status lapangan')
+            return { success: false, error }
         }
-        
-        return result
     }
 
     const handleApiErrors = (error: any) => {

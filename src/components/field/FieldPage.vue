@@ -90,6 +90,15 @@
             @submit="handleSubmit"
             ref="fieldModalRef"
         />
+
+        <!-- Delete Confirmation Modal -->
+        <DeleteModal
+            :show="showDeleteModal"
+            :field-name="fieldToDelete?.name"
+            :is-deleting="isDeleting"
+            @confirm="confirmDelete"
+            @cancel="cancelDelete"
+        />
     </div>
 </template>
 
@@ -100,6 +109,7 @@ import BaseButton from '../../components/ui/BaseButton.vue'
 import FieldModal from '../../components/field/FieldModal.vue'
 import FieldFilters from '../../components/field/FieldFilter.vue'
 import FieldTable from '../../components/field/FieldTable.vue'
+import DeleteModal from '../ui/DeleteModal.vue'
 
 // Composables
 const {
@@ -126,6 +136,11 @@ const searchQuery = ref('')
 const showModal = ref(false)
 const selectedField = ref<Field | null>(null)
 const fieldModalRef = ref()
+
+// Delete confirmation state
+const showDeleteModal = ref(false)
+const fieldToDelete = ref<Field | null>(null)
+const isDeleting = ref(false)
 
 // Computed
 const filteredFields = computed(() => {
@@ -176,13 +191,33 @@ const handleSubmit = async (fieldData: Field) => {
 }
 
 const handleDelete = async (field: Field) => {
-    if (confirm(`Yakin ingin menghapus lapangan "${field.name}"?`)) {
-        await deleteField(field.id)
-    }
+    fieldToDelete.value = field
+    showDeleteModal.value = true
+}
+
+const confirmDelete = async () => {
+    if (!fieldToDelete.value) return
+
+    isDeleting.value = true
+    await deleteField(fieldToDelete.value.id)
+    isDeleting.value = false
+
+    cancelDelete();
+}
+
+const cancelDelete = () => {
+    showDeleteModal.value = false
+    fieldToDelete.value = null
+    isDeleting.value = false
 }
 
 const handleToggleStatus = async (field: Field) => {
     await toggleFieldStatus(field)
+        
+    const fieldIndex = fields.value.findIndex(f => f.id === field.id)
+    if (fieldIndex !== -1) {
+        fields.value[fieldIndex].status = field.status === 'AVAILABLE' ? 'MAINTENANCE' : 'AVAILABLE'
+    }
 }
 
 // Lifecycle
