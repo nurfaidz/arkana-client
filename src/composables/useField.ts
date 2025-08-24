@@ -1,5 +1,5 @@
 // composables/useFields.ts
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useToast } from './useToast'
 import fieldApi from '../services/field'
 
@@ -11,6 +11,12 @@ export interface Field {
     status: string
 }
 
+export interface FieldFilters {
+    name?: string
+    type?: string
+    status?: string
+}
+
 export const useFields = () => {
     const { success, error: showError } = useToast()
     
@@ -18,17 +24,25 @@ export const useFields = () => {
     const fields = ref<Field[]>([])
     const loading = ref(false)
     const isSubmitting = ref(false)
+
+    // filter state
+    const filters = ref<FieldFilters>({
+        name: '',
+        type: '',
+        status: ''
+    })
     
     // Computed
     const totalFields = computed(() => fields.value.length)
     const availableFields = computed(() => fields.value.filter(f => f.status === 'AVAILABLE').length)
     const maintenanceFields = computed(() => fields.value.filter(f => f.status === 'MAINTENANCE').length)
-    
+
     // Methods
-    const fetchFields = async () => {
+    const fetchFields = async (filterParams?: FieldFilters) => {
         loading.value = true
         try {
-            const response = await fieldApi.getFields()
+            const currentFilters = filterParams || filters.value
+            const response = await fieldApi.getFields(currentFilters)
             console.log('Fields fetched:', response.data)
             fields.value = response.data
         } catch (err: any) {
@@ -36,6 +50,22 @@ export const useFields = () => {
             console.error('Error fetching fields:', err)
         } finally {
             loading.value = false
+        }
+    }
+
+    watch(filters, (newFilters) => {
+        fetchFields(newFilters)
+    }, { deep: true})
+
+    const updateFilters = (newFilters: Partial<FieldFilters>) => {
+        filters.value = { ...filters.value, ...newFilters }
+    }
+
+    const clearFilters = () => {
+        filters.value = {
+            name: '',
+            type: '',
+            status: ''
         }
     }
     
@@ -129,6 +159,7 @@ export const useFields = () => {
         fields,
         loading,
         isSubmitting,
+        filters,
         
         // Computed
         totalFields,
@@ -141,6 +172,8 @@ export const useFields = () => {
         updateField,
         deleteField,
         toggleFieldStatus,
-        handleApiErrors
+        handleApiErrors,
+        updateFilters,
+        clearFilters
     }
 }

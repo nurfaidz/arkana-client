@@ -1,9 +1,27 @@
 import Api from "./api";
 
 const FieldService = {
-    getFields: async () => {
+    getFields: async (filters = {}) => {
         try {
-            const response = await Api.get('/admin/fields');
+
+            const queryParams = new URLSearchParams();
+
+            if (filters.name && filters.name.trim()) {
+                queryParams.append('filter[name]', filters.name.trim());
+            }
+
+            if (filters.type && filters.type.trim()) {
+                queryParams.append('filter[type]', filters.type);
+            }
+
+            if (filters.status && filters.status.trim()) {
+                queryParams.append('filter[status]', filters.status);
+            }
+
+            const queryString = queryParams.toString();
+            const url = queryString ? `/admin/fields?${queryString}` : '/admin/fields';
+
+            const response = await Api.get(url);
 
             return response.data;
         } catch (error) {

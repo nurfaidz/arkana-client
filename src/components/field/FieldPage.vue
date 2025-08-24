@@ -67,14 +67,18 @@
 
         <!-- Filters -->
         <FieldFilters 
-            v-model:selectedType="selectedType"
-            v-model:selectedStatus="selectedStatus" 
-            v-model:searchQuery="searchQuery"
+            :selectedType="filters.type"
+            :selectedStatus="filters.status" 
+            :searchQuery="filters.searchQuery"
+            @update:selectedType="updateFilters({type: $event})"
+            @update:selectedStatus="updateFilters({status: $event})"
+            @update:searchQuery="updateFilters({name: $event})"
+            @clear="clearFilters"
         />
 
         <!-- Fields Table -->
         <FieldTable 
-            :fields="filteredFields"
+            :fields="fields"
             :loading="loading"
             @edit="openEditModal"
             @delete="handleDelete"
@@ -103,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useFields, type Field } from '../../composables/useField'
 import BaseButton from '../../components/ui/BaseButton.vue'
 import FieldModal from '../../components/field/FieldModal.vue'
@@ -116,6 +120,7 @@ const {
     fields,
     loading,
     isSubmitting,
+    filters,
     totalFields,
     availableFields,
     maintenanceFields,
@@ -124,13 +129,15 @@ const {
     updateField,
     deleteField,
     toggleFieldStatus,
-    handleApiErrors
+    handleApiErrors,
+    updateFilters,
+    clearFilters
 } = useFields()
 
 // Filters
-const selectedType = ref('')
-const selectedStatus = ref('')
-const searchQuery = ref('')
+// const selectedType = ref('')
+// const selectedStatus = ref('')
+// const searchQuery = ref('')
 
 // Modal state
 const showModal = ref(false)
@@ -143,14 +150,14 @@ const fieldToDelete = ref<Field | null>(null)
 const isDeleting = ref(false)
 
 // Computed
-const filteredFields = computed(() => {
-    return fields.value.filter(field => {
-        const matchesType = selectedType.value === '' || field.type === selectedType.value
-        const matchesStatus = selectedStatus.value === '' || field.status === selectedStatus.value
-        const matchesSearch = field.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-        return matchesType && matchesStatus && matchesSearch
-    })
-})
+// const filteredFields = computed(() => {
+//     return fields.value.filter(field => {
+//         const matchesType = selectedType.value === '' || field.type === selectedType.value
+//         const matchesStatus = selectedStatus.value === '' || field.status === selectedStatus.value
+//         const matchesSearch = field.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+//         return matchesType && matchesStatus && matchesSearch
+//     })
+// })
 
 // Methods
 const openAddModal = () => {
