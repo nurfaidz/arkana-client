@@ -3,6 +3,7 @@ import { authRoutes } from "./auth";
 import Dashboard from "../views/dashboard/Dashboard.vue";
 import DashboardPage from "../components/dashboard/DashboardPage.vue";
 import FieldPage from "../components/field/FieldPage.vue";
+import BookingPage from "../components/booking/BookingPage.vue";
 
 // define route
 const routes = [
@@ -28,6 +29,12 @@ const routes = [
         component: FieldPage,
         meta: { requiresAuth: true },
       },
+      {
+        path: "bookings",
+        name: "bookings",
+        component: BookingPage,
+        meta: { requiresAuth: true },
+      }
     ],
   },
 ];

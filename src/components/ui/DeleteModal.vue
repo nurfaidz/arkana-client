@@ -19,13 +19,10 @@
                 <!-- Content -->
                 <div class="px-6 py-4 text-center">
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">
-                        Konfirmasi Hapus Lapangan
+                        Konfirmasi Hapus
                     </h3>
                     <p class="text-sm text-gray-600 mb-1">
-                        Apakah Anda yakin ingin menghapus lapangan
-                    </p>
-                    <p class="text-sm font-semibold text-gray-900 mb-4">
-                        "{{ fieldName }}"?
+                        Apakah Anda yakin ingin menghapus data ini
                     </p>
                     <p class="text-xs text-red-600">
                         Tindakan ini tidak dapat dibatalkan.
@@ -60,7 +57,6 @@
 <script setup lang="ts">
 interface Props {
     show: boolean
-    fieldName: string
     isDeleting?: boolean
 }
 

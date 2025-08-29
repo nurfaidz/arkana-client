@@ -3,15 +3,15 @@
         <!-- Page Header -->
         <div class="flex items-center justify-between mb-8">
             <div>
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">Management Lapangan</h2>
-                <p class="text-gray-600">Kelola dan monitor semua lapangan olahraga</p>
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Booking & Jadwal</h2>
+                <p class="text-gray-600">Kelola dan monitor semua booking lapangan olahraga</p>
             </div>
             <BaseButton variant="primary" @click="openAddModal">
                 <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
-                Tambah Lapangan
+                Tambah Booking
             </BaseButton>
         </div>
 
@@ -27,8 +27,8 @@
                         </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Lapangan</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ totalFields }}</p>
+                        <p class="text-sm font-medium text-gray-600">Total Booking</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ totalBookings }}</p>
                     </div>
                 </div>
             </div>
@@ -42,8 +42,8 @@
                         </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Lapangan Tersedia</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ availableFields }}</p>
+                        <p class="text-sm font-medium text-gray-600">Booking Lunas</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ paidBookings }}</p>
                     </div>
                 </div>
             </div>
@@ -58,41 +58,43 @@
                         </svg>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Perlu Maintenance</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ maintenanceFields }}</p>
+                        <p class="text-sm font-medium text-gray-600">DP Saja</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ downPaymentBookings }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Filters -->
-        <FieldFilters 
-            :selectedType="filters.type"
-            :selectedStatus="filters.status" 
+        <BookingFilters 
+            :selectedStatus="filters.status"
+            :selectedField="filters.field_id"
             :searchQuery="filters.searchQuery"
-            @update:selectedType="updateFilters({type: $event})"
+            :fields="availableFields"
             @update:selectedStatus="updateFilters({status: $event})"
-            @update:searchQuery="updateFilters({name: $event})"
+            @update:selectedField="updateFilters({field_id: $event})"
+            @update:searchQuery="updateFilters({searchQuery: $event})"
             @clear="clearFilters"
         />
 
-        <!-- Fields Table -->
-        <FieldTable 
-            :fields="fields"
+        <!-- Bookings Table -->
+        <BookingTable
+            :bookings="filteredBookings"
             :loading="loading"
             @edit="openEditModal"
             @delete="handleDelete"
             @toggle-status="handleToggleStatus"
         />
 
-        <!-- Field Modal -->
-        <FieldModal
+        <!-- Booking Modal -->
+        <BookingModal
             :show="showModal"
-            :field="selectedField"
+            :booking="selectedBooking"
+            :fields="availableFields"
             :is-submitting="isSubmitting"
             @close="closeModal"
             @submit="handleSubmit"
-            ref="fieldModalRef"
+            ref="bookingModalRef"
         />
 
         <!-- Delete Confirmation Modal -->
@@ -106,68 +108,104 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useBookings, type Booking } from '../../composables/useBooking'
 import { useFields, type Field } from '../../composables/useField'
 import BaseButton from '../../components/ui/BaseButton.vue'
-import FieldModal from '../../components/field/FieldModal.vue'
-import FieldFilters from '../../components/field/FieldFilter.vue'
-import FieldTable from '../../components/field/FieldTable.vue'
+import BookingTable from './BookingTable.vue'
+import BookingFilters from './BookingFilter.vue'
+import BookingModal from './BookingModal.vue'
 import DeleteModal from '../ui/DeleteModal.vue'
 
 // Composables
 const {
-    fields,
+    bookings,
     loading,
     isSubmitting,
     filters,
-    totalFields,
-    availableFields,
-    maintenanceFields,
-    fetchFields,
-    createField,
-    updateField,
-    deleteField,
-    toggleFieldStatus,
+    fetchBookings,
+    createBooking,
+    updateBooking,
+    deleteBooking,
+    toggleBookingStatus,
     handleApiErrors,
     updateFilters,
     clearFilters
-} = useFields()
+} = useBookings()
+
+const { fields: availableFields, fetchFields } = useFields()
 
 // Modal state
 const showModal = ref(false)
-const selectedField = ref<Field | null>(null)
-const fieldModalRef = ref()
+const selectedBooking = ref<Booking | null>(null)
+const bookingModalRef = ref()
 
 // Delete confirmation state
 const showDeleteModal = ref(false)
-const fieldToDelete = ref<Field | null>(null)
+const bookingToDelete = ref<Booking | null>(null)
 const isDeleting = ref(false)
+
+// Computed properties
+const totalBookings = computed(() => bookings.value.length)
+
+const paidBookings = computed(() => 
+    bookings.value.filter(booking => booking.booking_status === 'PAID').length
+)
+
+const downPaymentBookings = computed(() => 
+    bookings.value.filter(booking => booking.booking_status === 'DOWNPAYMENT').length
+)
+
+const filteredBookings = computed(() => {
+    let filtered = [...bookings.value]
+
+    // Filter by status
+    if (filters.value.status) {
+        filtered = filtered.filter(booking => booking.booking_status === filters.value.status)
+    }
+
+    // Filter by field
+    if (filters.value.field_id) {
+        filtered = filtered.filter(booking => booking.field.id.toString() === filters.value.field_id.toString())
+    }
+
+    // Filter by search query (booking name or phone)
+    if (filters.value.searchQuery) {
+        const query = filters.value.searchQuery.toLowerCase()
+        filtered = filtered.filter(booking => 
+            booking.booking_name?.toLowerCase().includes(query) ||
+            booking.phone?.toLowerCase().includes(query)
+        )
+    }
+
+    return filtered
+})
 
 // Methods
 const openAddModal = () => {
-    selectedField.value = null
+    selectedBooking.value = null
     showModal.value = true
 }
 
-const openEditModal = (field: Field) => {
-    selectedField.value = { ...field }
+const openEditModal = (booking: Booking) => {
+    selectedBooking.value = { ...booking }
     showModal.value = true
 }
 
 const closeModal = () => {
     showModal.value = false
-    selectedField.value = null
+    selectedBooking.value = null
 }
 
-const handleSubmit = async (fieldData: Field) => {
+const handleSubmit = async (bookingData: Booking) => {
     let result
     
-    if (selectedField.value?.id) {
+    if (selectedBooking.value?.id) {
         // Edit mode
-        result = await updateField(selectedField.value.id, fieldData)
+        result = await updateBooking(selectedBooking.value.id, bookingData)
     } else {
         // Add mode
-        result = await createField(fieldData)
+        result = await createBooking(bookingData)
     }
     
     if (result.success) {
@@ -175,44 +213,49 @@ const handleSubmit = async (fieldData: Field) => {
     } else {
         // Handle API validation errors
         const apiErrors = handleApiErrors(result.error)
-        if (apiErrors && fieldModalRef.value) {
-            fieldModalRef.value.setErrors(apiErrors)
+        if (apiErrors && bookingModalRef.value) {
+            bookingModalRef.value.setErrors(apiErrors)
         }
     }
 }
 
-const handleDelete = async (field: Field) => {
-    fieldToDelete.value = field
+const handleDelete = async (booking: Booking) => {
+    bookingToDelete.value = booking
     showDeleteModal.value = true
 }
 
 const confirmDelete = async () => {
-    if (!fieldToDelete.value) return
+    if (!bookingToDelete.value) return
 
     isDeleting.value = true
-    await deleteField(fieldToDelete.value.id)
+    await deleteBooking(bookingToDelete.value.id)
     isDeleting.value = false
 
-    cancelDelete();
+    cancelDelete()
 }
 
 const cancelDelete = () => {
     showDeleteModal.value = false
-    fieldToDelete.value = null
+    bookingToDelete.value = null
     isDeleting.value = false
 }
 
-const handleToggleStatus = async (field: Field) => {
-    await toggleFieldStatus(field)
-        
-    const fieldIndex = fields.value.findIndex(f => f.id === field.id)
-    if (fieldIndex !== -1) {
-        fields.value[fieldIndex].status = field.status === 'AVAILABLE' ? 'MAINTENANCE' : 'AVAILABLE'
+const handleToggleStatus = async (booking: Booking) => {
+    await toggleBookingStatus(booking)
+    
+    // Update local state
+    const bookingIndex = bookings.value.findIndex(b => b.id === booking.id)
+    if (bookingIndex !== -1) {
+        bookings.value[bookingIndex].booking_status = 
+            booking.booking_status === 'DOWNPAYMENT' ? 'PAID' : 'DOWNPAYMENT'
     }
 }
 
 // Lifecycle
-onMounted(() => {
-    fetchFields()
+onMounted(async () => {
+    await Promise.all([
+        fetchBookings(),
+        fetchFields()
+    ])
 })
 </script>
